@@ -1,0 +1,200 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: News API Server
+servers:
+  - url: https://production.news.io/api/v1/
+    description: Production
+  - url: http://localhost:8080/
+    description: Local
+paths:
+  /posts:
+    post:
+      summary: Creates a new post
+      operationId: createPost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePostBody"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatePostResponse"
+        400:
+          $ref: "#/components/responses/InvalidRequest"
+        default:
+          $ref: "#/components/responses/Default"
+
+    get:
+      summary: Retrieves all posts
+      operationId: getAllPosts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+        400:
+          $ref: "#/components/responses/InvalidRequest"
+        default:
+          $ref: "#/components/responses/Default"
+
+  /posts/{postID}:
+    get:
+      summary: Retrieves post by ID
+      operationId: getPost
+      parameters:
+        - $ref: "#/components/parameters/PostID"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        400:
+          $ref: "#/components/responses/InvalidRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Default"
+
+    put:
+      summary: Updates post by ID
+      operationId: updatePost
+      parameters:
+        - $ref: "#/components/parameters/PostID"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdatePostResponse"
+        400:
+          $ref: "#/components/responses/InvalidRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Default"
+
+    delete:
+      summary: Removes post by ID
+      operationId: deletePost
+      parameters:
+        - $ref: "#/components/parameters/PostID"
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: "#/components/responses/InvalidRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        default:
+          $ref: "#/components/responses/Default"
+
+components:
+  schemas:
+    Post:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CreatePostBody"
+        - $ref: "#/components/schemas/CreatePostResponse"
+
+    CreatePostBody:
+      type: object
+      properties:
+        title:
+          description: Post title
+          type: string
+          minLength: 3
+          maxLength: 50
+        content:
+          description: Post content
+          type: string
+
+    CreatePostResponse:
+      allOf:
+        - $ref: "#/components/schemas/UpdatePostResponse"
+        - type: object
+          properties:
+            id:
+              description: Post ID
+              type: string
+              format: uuid
+            created_at:
+              description: When post was created
+              type: string
+              format: date-time
+
+    UpdatePostResponse:
+      type: object
+      properties:
+        updated_at:
+          description: When post was last updated
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/Error"
+      required:
+        - error
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: |
+            Error codes:
+              - "NOT_FOUND" - not found by id
+              - "REQUEST_INVALID" - request fields has invalid types
+              - "ALREADY_EXISTS" - returns when you create something which is already exists in storage
+              - "INTERNAL_ERROR" - return when service has unexpected error
+        message:
+          type: string
+          description: Error message
+
+  parameters:
+    PostID:
+      name: postID
+      in: path
+      description: Post ID
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Default:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InvalidRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
