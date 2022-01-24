@@ -18,6 +18,8 @@ const (
 
 type e2eTestSuite struct {
 	suite.Suite
+
+	dockerCompose *exec.Cmd
 }
 
 func TestE2ETestSuite(t *testing.T) {
@@ -25,20 +27,21 @@ func TestE2ETestSuite(t *testing.T) {
 }
 
 func (s *e2eTestSuite) SetupSuite() {
-	cmd := exec.Command("docker-compose", "-f", "../docker-compose.dev.yaml", "up", "-d")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := newDockerComposeCmd("up", "-d")
 	s.Require().NoError(cmd.Run())
 }
 
 func (s *e2eTestSuite) TearDownSuite() {
-	cmd := exec.Command("docker-compose", "-f", "../docker-compose.dev.yaml", "down")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := newDockerComposeCmd("down")
 	s.Require().NoError(cmd.Run())
 }
 
-func (s *e2eTestSuite) Test_EndToEnd_GetAllPosts() {
+func (s *e2eTestSuite) TearDownTest() {
+	cmd := newDockerComposeCmd("up", "news-clean-postgres")
+	s.Require().NoError(cmd.Run())
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_GetAllPostsEmpty() {
 	s.AssertRequestResponse(http.MethodGet, "/posts", "",
 		http.StatusOK, `{"posts":[]}`)
 }
@@ -80,4 +83,12 @@ func (s *e2eTestSuite) EqualResponse(expectedStatusCode int, expectedBody string
 	s.Equal(expectedBody, strings.Trim(string(byteBody), "\n"))
 
 	s.Require().NoError(actual.Body.Close())
+}
+
+func newDockerComposeCmd(args ...string) *exec.Cmd {
+	cmd := exec.Command("docker-compose", "-f", "../docker-compose.dev.yaml")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Args = append(cmd.Args, args...)
+	return cmd
 }

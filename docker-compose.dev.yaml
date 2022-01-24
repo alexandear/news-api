@@ -21,6 +21,14 @@ services:
     depends_on:
       - postgres
 
+  news-clean-postgres:
+    image: postgres:14.1
+    env_file:
+      - .env
+    command: psql ${POSTGRES_URL} -c "TRUNCATE TABLE posts;"
+    depends_on:
+      - news-migrate
+
   news-server:
     build: .
     image: news-api
