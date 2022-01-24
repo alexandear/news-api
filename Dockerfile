@@ -8,7 +8,7 @@ COPY . ./
 
 RUN make build && cp ./bin/news-api /usr/local/bin/ && rm -rf /go/src
 
-FROM scratch
+FROM alpine
 
 COPY --from=build /usr/local/bin/ /usr/local/bin/
 

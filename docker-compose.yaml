@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:14.1
+    environment:
+      POSTGRES_DB: "newsdb"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - .:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  news-migrate:
+    build: .
+    image: news-api
+    entrypoint: ["news-api", "migrate", "-database_url", "postgres://postgres:postgres@postgres:5432/newsdb?sslmode=disable"]
+    volumes:
+      - ./migrations:/migrations
+    depends_on:
+      - postgres
+
+  news-server:
+    build: .
+    image: news-api
+    ports:
+      - "80:80"
+    entrypoint: ["news-api", "server"]
+    depends_on:
+      - postgres
+      - news-migrate

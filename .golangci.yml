@@ -41,3 +41,6 @@ issues:
     - linters:
         - lll
       source: "^//go:generate "
+    - linters:
+        - typecheck
+      path: "cmd/migrate.go"

@@ -20,3 +20,5 @@ bazel*
 **/testdata
 .idea
 *.iml
+
+pgdata/

@@ -20,9 +20,8 @@ test:
 	@echo test
 	@go test -count=1 -v $(TEST_PKGS)
 
-lint:
+lint: install-tools
 	@echo lint
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	@$(GOBIN)/golangci-lint run
 
 format:
@@ -42,3 +41,7 @@ docker:
 docker-run:
 	@echo docker-run
 	@docker run --rm $(IMAGE)
+
+install-tools:
+	@echo install tools from tools.go
+	@cat tools.go | grep _ | awk -F '"' '{print $$2}' | xargs -tI % go install %
