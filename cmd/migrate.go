@@ -13,7 +13,8 @@ import (
 type MigrateCmd struct {
 	fs *flag.FlagSet
 
-	DatabaseURL string
+	DatabaseURL   string
+	MigrationsDir string
 }
 
 func NewMigrateCmd() *MigrateCmd {
@@ -23,24 +24,25 @@ func NewMigrateCmd() *MigrateCmd {
 	}
 
 	cmd.fs.StringVar(&cmd.DatabaseURL, "database_url", "", "Database URL")
+	cmd.fs.StringVar(&cmd.MigrationsDir, "migrations", "", "Directory with migrations files")
 
 	return cmd
 }
 
-func (c MigrateCmd) Name() string {
+func (c *MigrateCmd) Name() string {
 	return c.fs.Name()
 }
 
-func (c MigrateCmd) Description() string {
+func (c *MigrateCmd) Description() string {
 	return "Run SQL migrations"
 }
 
-func (c MigrateCmd) Init(args []string) error {
+func (c *MigrateCmd) Init(args []string) error {
 	return c.fs.Parse(args)
 }
 
-func (c MigrateCmd) Run() error {
-	m, err := migrate.New("file://migrations", c.DatabaseURL)
+func (c *MigrateCmd) Run() error {
+	m, err := migrate.New(fmt.Sprintf("file://%s", c.MigrationsDir), c.DatabaseURL)
 	if err != nil {
 		return fmt.Errorf("failed to create migrate: %w", err)
 	}
