@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	chi "github.com/go-chi/chi/v5"
@@ -11,6 +12,7 @@ import (
 
 	server "github.com/alexandear/news-api/internal/http"
 	httpMiddleware "github.com/alexandear/news-api/internal/http/middleware"
+	"github.com/alexandear/news-api/internal/postgres"
 	api "github.com/alexandear/news-api/pkg/httpapi"
 )
 
@@ -21,8 +23,9 @@ type ServerCmd struct {
 	Port        int
 	PostgresURL string
 
-	log    *log.Logger
 	server *http.Server
+
+	closers []io.Closer
 }
 
 func NewServerCmd() *ServerCmd {
@@ -47,11 +50,20 @@ func (c *ServerCmd) Description() string {
 }
 
 func (c *ServerCmd) Init(args []string) error {
-	if err := c.fs.Parse(args); err != nil {
-		return fmt.Errorf("failed to parse flags: %w", err)
-	}
+	return c.fs.Parse(args)
+}
 
-	c.log = log.New()
+func (c *ServerCmd) Run() error {
+	logger := log.New()
+
+	defer func() {
+		for _, cl := range c.closers {
+			err := cl.Close()
+			if err != nil {
+				logger.WithError(err).Warn("failed to close")
+			}
+		}
+	}()
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
@@ -66,25 +78,28 @@ func (c *ServerCmd) Init(args []string) error {
 	r := chi.NewRouter()
 
 	r.Use(
-		httpMiddleware.Panic(c.log),
-		httpMiddleware.NewStructuredLogger(c.log),
+		httpMiddleware.Panic(logger),
+		httpMiddleware.NewStructuredLogger(logger),
 		httpMiddleware.Spec("", rawSpec),
 		httpMiddleware.Doc(swagger.Info.Title, ""),
 	)
 
-	serv := server.NewServer()
+	stor, err := postgres.NewStorage(c.PostgresURL)
+	if err != nil {
+		return fmt.Errorf("failed to create new storage: %w", err)
+	}
+	c.closers = append(c.closers, stor)
+
+	serv := server.NewServer(logger, stor)
 	api.HandlerFromMux(serv, r)
 
 	c.server = &http.Server{
 		Handler: r,
 		Addr:    fmt.Sprintf("%s:%d", c.Host, c.Port),
 	}
+	c.closers = append(c.closers, c.server)
 
-	return nil
-}
-
-func (c *ServerCmd) Run() error {
-	c.log.WithField("address", c.server.Addr).Info("starting server at address")
+	logger.WithField("address", c.server.Addr).Info("starting server at address")
 
 	if err := c.server.ListenAndServe(); err != nil {
 		return fmt.Errorf("failed to listen: %w", err)

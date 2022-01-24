@@ -1,8 +1,10 @@
 package http
 
 import (
-	"log"
+	"context"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 
 	httpapi "github.com/alexandear/news-api/pkg/httpapi"
 )
@@ -12,15 +14,28 @@ import (
 
 var _ httpapi.ServerInterface = &Server{}
 
-type Server struct {
+type Storage interface {
+	GetAllPosts(ctx context.Context) error
 }
 
-func NewServer() *Server {
-	return &Server{}
+type Server struct {
+	storage Storage
+
+	log *log.Logger
+}
+
+func NewServer(log *log.Logger, storage Storage) *Server {
+	return &Server{
+		log:     log,
+		storage: storage,
+	}
 }
 
 func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
-	log.Panicln("implement me")
+	err := s.storage.GetAllPosts(r.Context())
+	if err != nil {
+		s.log.WithError(err).Warn()
+	}
 }
 
 func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {

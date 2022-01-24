@@ -10,6 +10,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/golang/mock v1.6.0
 	github.com/golangci/golangci-lint v1.43.0
+	github.com/jmoiron/sqlx v1.3.1
 	github.com/namsral/flag v1.7.4-pre
 	github.com/sirupsen/logrus v1.8.1
 )
