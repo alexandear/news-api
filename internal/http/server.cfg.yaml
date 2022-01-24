@@ -1,0 +1,6 @@
+output:
+  ../../pkg/httpapi/news-server.gen.go
+generate:
+  - chi-server
+  - spec
+package: api

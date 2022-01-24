@@ -32,6 +32,10 @@ tidy:
 	@echo tidy
 	@go mod tidy
 
+generate: install-tools
+	@echo generate
+	@go generate ./...
+
 IMAGE = news-api
 
 docker:

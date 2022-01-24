@@ -10,6 +10,20 @@ There are HTTP server written in Go and PostgreSQL storage.
 
 > Prerequisites: `docker`, `docker-compose`, `go@1.18`, `make` must be installed.
 
+## Getting Started
+
+Run HTTP server and database with single command:
+
+```shell
+docker-compose up
+```
+
+Server will be accessible via port *8080* by default.
+
+### Configuration
+
+All necessary configuration stored in [.docker-compose.yaml](`docker-compose.yaml`) and [.env](`.env`) files.
+
 ### Binary
 
 Build the binary `bin/news-api`:

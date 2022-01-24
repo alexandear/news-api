@@ -1,0 +1,5 @@
+output:
+  ../../pkg/httpapi/news-types.gen.go
+generate:
+  - types
+package: api
