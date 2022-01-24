@@ -19,7 +19,7 @@ type ServerCmd struct {
 
 	Host        string
 	Port        int
-	DatabaseURL string
+	PostgresURL string
 
 	log    *log.Logger
 	server *http.Server
@@ -33,7 +33,7 @@ func NewServerCmd() *ServerCmd {
 
 	cmd.fs.StringVar(&cmd.Host, "host", "localhost", "HTTP host")
 	cmd.fs.IntVar(&cmd.Port, "port", 8080, "HTTP port")
-	cmd.fs.StringVar(&cmd.DatabaseURL, "database_url", "", "Database URL")
+	addPostgresURLFlag(cmd.fs, &cmd.PostgresURL)
 
 	return cmd
 }

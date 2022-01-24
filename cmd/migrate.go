@@ -23,8 +23,8 @@ func NewMigrateCmd() *MigrateCmd {
 		fs: fs,
 	}
 
-	cmd.fs.StringVar(&cmd.PostgresURL, "postgres_url", "", "Database URL")
 	cmd.fs.StringVar(&cmd.MigrationsDir, "migrations_dir", "migrations", "Directory with migrations SQLs")
+	addPostgresURLFlag(cmd.fs, &cmd.PostgresURL)
 
 	return cmd
 }
