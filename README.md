@@ -1,6 +1,6 @@
 # News API
 
-A microservice to store and get news articles.
+A microservice to store and retrieve news posts.
 
 ## Technologies
 
@@ -8,9 +8,9 @@ There are HTTP server written in Go and PostgreSQL storage.
 
 ## Development
 
-> Prerequisites: `docker`, `docker-compose`, `go@1.18`, `make` must be installed.
-
 ## Getting Started
+
+> Only `docker` and `docker-compose` are needed.
 
 Run HTTP server and database with single command:
 
@@ -25,6 +25,8 @@ Server will be accessible via port *8080* by default.
 All necessary configuration stored in [.docker-compose.yaml](`docker-compose.yaml`) and [.env](`.env`) files.
 
 ### Binary
+
+> Prerequisites: `go@1.18`, `make` must be installed.
 
 Build the binary `bin/news-api`:
 

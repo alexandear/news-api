@@ -3,7 +3,7 @@ PATH := $(MAKEFILE_PATH):$(PATH)
 
 export GOBIN := $(MAKEFILE_PATH)/bin
 
-all: clean format build test
+all: clean format generate build test
 
 clean:
 	@echo clean
