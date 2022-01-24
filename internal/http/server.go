@@ -49,12 +49,14 @@ func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respPosts := make([]*httpapi.Post, 0, len(posts))
+	respPosts := make([]httpapi.Post, 0, len(posts))
 	for _, p := range posts {
 		respPosts = append(respPosts, httpapiPost(p))
 	}
 
-	s.sendOK(w, respPosts)
+	s.sendOK(w, httpapi.GetAllPostsResponse{
+		Posts: respPosts,
+	})
 }
 
 func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
@@ -111,11 +113,11 @@ func (s *Server) UpdatePost(w http.ResponseWriter, r *http.Request, postID httpa
 	}
 }
 
-func httpapiPost(p news.Post) *httpapi.Post {
-	return &httpapi.Post{
+func httpapiPost(p news.Post) httpapi.Post {
+	return httpapi.Post{
 		CreatePostBody: httpapi.CreatePostBody{
+			Title:   p.Title,
 			Content: &p.Content,
-			Title:   &p.Title,
 		},
 		CreatePostResponse: httpapi.CreatePostResponse{
 			UpdatePostResponse: httpapi.UpdatePostResponse{

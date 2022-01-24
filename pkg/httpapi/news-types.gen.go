@@ -13,7 +13,7 @@ type CreatePostBody struct {
 	Content *string `json:"content,omitempty"`
 
 	// Post title
-	Title *string `json:"title,omitempty"`
+	Title string `json:"title"`
 }
 
 // CreatePostResponse defines model for CreatePostResponse.
@@ -44,6 +44,11 @@ type Error struct {
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Error Error `json:"error"`
+}
+
+// GetAllPostsResponse defines model for GetAllPostsResponse.
+type GetAllPostsResponse struct {
+	Posts []Post `json:"posts"`
 }
 
 // Post defines model for Post.

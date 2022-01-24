@@ -38,9 +38,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Post"
+                $ref: "#/components/schemas/GetAllPostsResponse"
         400:
           $ref: "#/components/responses/InvalidRequest"
         default:
@@ -119,6 +117,8 @@ components:
         content:
           description: Post content
           type: string
+      required:
+        - title
 
     CreatePostResponse:
       allOf:
@@ -141,6 +141,16 @@ components:
           description: When post was last updated
           type: string
           format: date-time
+
+    GetAllPostsResponse:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+      required:
+        - posts
 
     ErrorResponse:
       type: object

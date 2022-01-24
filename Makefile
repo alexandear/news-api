@@ -14,11 +14,16 @@ build:
 	@go build -o $(GOBIN)/news-api
 
 TEST_PKGS = $(shell go list ./... | grep -v /test)
+TEST_E2E_PKG = $(shell go list ./... | grep /test)
 
 .PHONY: test
 test:
 	@echo test
 	@go test -count=1 -v $(TEST_PKGS)
+
+test.e2e:
+	@echo test.e2e
+	@go test -count=1 -v $(TEST_E2E_PKG)
 
 lint: install-tools
 	@echo lint

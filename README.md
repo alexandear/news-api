@@ -42,10 +42,16 @@ See also [Makefile](Makefile) for all available targets.
 
 ### Tests
 
-Run tests:
+Run unit tests:
 
 ```shell
 make test
+```
+
+Run e2e tests from the [test](test) folder:
+
+```shell
+make test.e2e
 ```
 
 ### Code style
