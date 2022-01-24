@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -42,4 +43,27 @@ func NewStorage(postgresURL string) (*Storage, error) {
 
 func (s *Storage) Close() error {
 	return s.Close()
+}
+
+type TxFunc func(ctx context.Context, tx *sqlx.Tx) error
+
+func (s *Storage) Transaction(ctx context.Context, opts *sql.TxOptions, txFn TxFunc) error {
+	tx, err := s.db.BeginTxx(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("failed to begin tx, %w", err)
+	}
+
+	if err := txFn(ctx, tx); err != nil {
+		if e := tx.Rollback(); e != nil {
+			return fmt.Errorf("failed to execute tx, %w", err)
+		}
+
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit tx, %w", err)
+	}
+
+	return nil
 }
