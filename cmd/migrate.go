@@ -2,18 +2,18 @@ package cmd
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/namsral/flag"
 )
 
 type MigrateCmd struct {
 	fs *flag.FlagSet
 
-	DatabaseURL   string
+	PostgresURL   string
 	MigrationsDir string
 }
 
@@ -23,14 +23,14 @@ func NewMigrateCmd() *MigrateCmd {
 		fs: fs,
 	}
 
-	cmd.fs.StringVar(&cmd.DatabaseURL, "database_url", "", "Database URL")
-	cmd.fs.StringVar(&cmd.MigrationsDir, "migrations", "", "Directory with migrations files")
+	cmd.fs.StringVar(&cmd.PostgresURL, "postgres_url", "", "Database URL")
+	cmd.fs.StringVar(&cmd.MigrationsDir, "migrations_dir", "migrations", "Directory with migrations SQLs")
 
 	return cmd
 }
 
 func (c *MigrateCmd) Name() string {
-	return c.fs.Name()
+	return "migrate"
 }
 
 func (c *MigrateCmd) Description() string {
@@ -42,7 +42,7 @@ func (c *MigrateCmd) Init(args []string) error {
 }
 
 func (c *MigrateCmd) Run() error {
-	m, err := migrate.New(fmt.Sprintf("file://%s", c.MigrationsDir), c.DatabaseURL)
+	m, err := migrate.New(fmt.Sprintf("file://%s", c.MigrationsDir), c.PostgresURL)
 	if err != nil {
 		return fmt.Errorf("failed to create migrate: %w", err)
 	}

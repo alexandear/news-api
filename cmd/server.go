@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"flag"
+	"github.com/namsral/flag"
 )
 
 type ServerCmd struct {
@@ -16,7 +16,7 @@ func NewServerCmd() *ServerCmd {
 }
 
 func (c ServerCmd) Name() string {
-	return c.fs.Name()
+	return "server"
 }
 
 func (c ServerCmd) Description() string {
