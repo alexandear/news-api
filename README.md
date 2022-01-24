@@ -6,8 +6,6 @@ A microservice to store and retrieve news posts.
 
 There are HTTP server written in Go and PostgreSQL storage.
 
-## Development
-
 ## Getting Started
 
 > Only `docker` and `docker-compose` are needed.
@@ -18,15 +16,15 @@ Run HTTP server and database with single command:
 docker-compose up
 ```
 
-Server will be accessible via port *8080* by default.
+Server will be accessible via port **8080** by default.
 
-### Configuration
-
-All necessary configuration stored in [.docker-compose.yaml](`docker-compose.yaml`) and [.env](`.env`) files.
-
-### Binary
+## Development
 
 > Prerequisites: `go@1.18`, `make` must be installed.
+
+All necessary configuration stored in [docker-compose.yaml](docker-compose.yaml) and [.env](.env) files.
+
+### Binary
 
 Build the binary `bin/news-api`:
 
@@ -38,6 +36,16 @@ Build docker image `news-api:latest`:
 
 ```shell
 make docker
+```
+
+See also [Makefile](Makefile) for all available targets.
+
+### Tests
+
+Run tests:
+
+```shell
+make test
 ```
 
 ### Code style
@@ -54,14 +62,6 @@ Run linter:
 
 ```shell
 make lint
-```
-
-### Tests
-
-Run tests:
-
-```shell
-make test
 ```
 
 ### CI
