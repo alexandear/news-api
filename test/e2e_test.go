@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -50,6 +51,36 @@ func (s *e2eTestSuite) Test_EndToEnd_GetAllPosts() {
 		resp := s.DoRequest(req)
 
 		s.EqualResponse(http.StatusOK, `{"posts":[]}`, resp)
+	})
+
+	s.Run("200 when few posts", func() {
+		for i := 0; i < 3; i++ {
+			req := s.NewRequest(http.MethodPost, "/posts", fmt.Sprintf(`{"title":"Title %d","content":"Content %d"}`, i, i))
+			resp := s.DoRequest(req)
+			s.EqualStatusCode(http.StatusOK, resp)
+		}
+
+		req := s.NewRequest(http.MethodGet, "/posts", "")
+
+		resp := s.DoRequest(req)
+
+		s.EqualStatusCode(http.StatusOK, resp)
+
+		s.Require().NotNil(resp.Body)
+		type respPost struct {
+			ID        string    `json:"id"`
+			Title     string    `json:"title"`
+			Content   string    `json:"content"`
+			UpdatedAt time.Time `json:"updated_at"`
+			CreatedAt time.Time `json:"created_at"`
+		}
+		type respJSON struct {
+			Posts []respPost `json:"posts"`
+		}
+
+		actual := &respJSON{}
+		s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+		s.Len(actual.Posts, 3)
 	})
 }
 

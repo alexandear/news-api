@@ -17,7 +17,7 @@ type post struct {
 	Title     string         `db:"title"`
 	Content   sql.NullString `db:"content"`
 	CreatedAt time.Time      `db:"created_at"`
-	UpdatedAt time.Time      `db:"updated_at"`
+	UpdatedAt sql.NullTime   `db:"updated_at"`
 }
 
 func (p *post) ToModel() news.Post {
@@ -26,7 +26,7 @@ func (p *post) ToModel() news.Post {
 		Title:     p.Title,
 		Content:   p.Content.String,
 		CreatedAt: p.CreatedAt,
-		UpdatedAt: p.UpdatedAt,
+		UpdatedAt: p.UpdatedAt.Time,
 	}
 }
 
