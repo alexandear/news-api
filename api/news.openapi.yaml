@@ -16,14 +16,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePostBody"
+              $ref: "#/components/schemas/PostData"
       responses:
         200:
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreatePostResponse"
+                $ref: "#/components/schemas/PostMetadata"
         400:
           $ref: "#/components/responses/InvalidRequest"
         default:
@@ -75,7 +75,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdatePostResponse"
+                $ref: "#/components/schemas/PostUpdateMetadata"
         400:
           $ref: "#/components/responses/InvalidRequest"
         404:
@@ -103,10 +103,10 @@ components:
     Post:
       type: object
       allOf:
-        - $ref: "#/components/schemas/CreatePostBody"
-        - $ref: "#/components/schemas/CreatePostResponse"
+        - $ref: "#/components/schemas/PostData"
+        - $ref: "#/components/schemas/PostMetadata"
 
-    CreatePostBody:
+    PostData:
       type: object
       properties:
         title:
@@ -120,9 +120,9 @@ components:
       required:
         - title
 
-    CreatePostResponse:
+    PostMetadata:
       allOf:
-        - $ref: "#/components/schemas/UpdatePostResponse"
+        - $ref: "#/components/schemas/PostUpdateMetadata"
         - type: object
           properties:
             id:
@@ -134,7 +134,7 @@ components:
               type: string
               format: date-time
 
-    UpdatePostResponse:
+    PostUpdateMetadata:
       type: object
       properties:
         updated_at:

@@ -30,15 +30,29 @@ func (p *post) ToModel() news.Post {
 	}
 }
 
-func (s *Storage) CreatePost(ctx context.Context, postID string, params news.CreatePostParams) error {
-	const q = `INSERT INTO posts (id, title, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?) posts`
+type postMetadata struct {
+	ID        string    `db:"id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
 
-	if _, err := s.db.ExecContext(ctx, q, postID, params.Title, params.Content, params.CreatedAt,
-		params.UpdatedAt); err != nil {
-		return fmt.Errorf("failed to exec: %w", err)
+func (p *postMetadata) ToModel() news.PostMetadata {
+	return news.PostMetadata{
+		PostID:    p.ID,
+		CreatedAt: p.CreatedAt,
+		UpdatedAt: p.UpdatedAt,
+	}
+}
+
+func (s *Storage) CreatePost(ctx context.Context, params news.CreatePostParams) (news.PostMetadata, error) {
+	const q = `INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id, created_at`
+
+	var pm postMetadata
+	if err := s.db.QueryRowxContext(ctx, q, params.Title, params.Content).StructScan(&pm); err != nil {
+		return news.PostMetadata{}, fmt.Errorf("failed to query row: %w", err)
 	}
 
-	return nil
+	return pm.ToModel(), nil
 }
 
 func (s *Storage) GetPost(ctx context.Context, postID string) (news.Post, error) {
@@ -91,7 +105,7 @@ func (s *Storage) UpdatePost(ctx context.Context, postID string, params news.Upd
 			return fmt.Errorf("failed to select: %w", err)
 		}
 
-		if _, err := tx.Exec(qu, postID, params.Title, params.Content, params.UpdatedAt); err != nil {
+		if _, err := tx.Exec(qu, postID, params.Title, params.Content); err != nil {
 			return fmt.Errorf("failed to update: %w", err)
 		}
 

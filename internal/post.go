@@ -18,15 +18,18 @@ type Post struct {
 	UpdatedAt time.Time
 }
 
-type CreatePostParams struct {
-	Title     string
-	Content   string
+type PostMetadata struct {
+	PostID    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
+type CreatePostParams struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
 type UpdatePostParams struct {
-	Title     string
-	Content   string
-	UpdatedAt time.Time
+	Title   string
+	Content string
 }

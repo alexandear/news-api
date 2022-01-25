@@ -2,6 +2,7 @@ package httpnews
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -17,10 +18,11 @@ import (
 const (
 	ErrorCodePostNotFound  = "POST_NOT_FOUND"
 	ErrorCodeInvalidPostID = "INVALID_POST_ID"
+	ErrorCodeInvalidBody   = "INVALID_BODY"
 )
 
 type Storage interface {
-	CreatePost(ctx context.Context, postID string, params news.CreatePostParams) error
+	CreatePost(ctx context.Context, params news.CreatePostParams) (news.PostMetadata, error)
 	GetPost(ctx context.Context, postID string) (news.Post, error)
 	GetAllPosts(ctx context.Context) ([]news.Post, error)
 	UpdatePost(ctx context.Context, postID string, params news.UpdatePostParams) error
@@ -60,14 +62,25 @@ func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
-	err := s.storage.CreatePost(r.Context(), "", news.CreatePostParams{})
+	if r.Body == nil {
+		s.sendBadRequestError(w, news.ErrInvalidArgument, ErrorCodeInvalidBody, "empty body")
+		return
+	}
+
+	var params news.CreatePostParams
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		s.sendBadRequestError(w, news.ErrInvalidArgument, ErrorCodeInvalidBody, "failed to decode body")
+		return
+	}
+
+	meta, err := s.storage.CreatePost(r.Context(), params)
 	switch {
 	case errors.Is(err, news.ErrInvalidArgument):
 		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "invalid create params")
 	case err != nil:
 		s.sendDefaultError(w, err, "failed to create post")
 	default:
-		s.sendOK(w, nil)
+		s.sendOK(w, httpapiPostMetadata(meta))
 	}
 }
 
@@ -115,16 +128,24 @@ func (s *Server) UpdatePost(w http.ResponseWriter, r *http.Request, postID httpa
 
 func httpapiPost(p news.Post) httpapi.Post {
 	return httpapi.Post{
-		CreatePostBody: httpapi.CreatePostBody{
+		PostData: httpapi.PostData{
 			Title:   p.Title,
 			Content: &p.Content,
 		},
-		CreatePostResponse: httpapi.CreatePostResponse{
-			UpdatePostResponse: httpapi.UpdatePostResponse{
-				UpdatedAt: &p.UpdatedAt,
-			},
-			CreatedAt: &p.CreatedAt,
-			Id:        &p.PostID,
+		PostMetadata: httpapiPostMetadata(news.PostMetadata{
+			PostID:    p.PostID,
+			CreatedAt: p.CreatedAt,
+			UpdatedAt: p.UpdatedAt,
+		}),
+	}
+}
+
+func httpapiPostMetadata(p news.PostMetadata) httpapi.PostMetadata {
+	return httpapi.PostMetadata{
+		PostUpdateMetadata: httpapi.PostUpdateMetadata{
+			UpdatedAt: &p.UpdatedAt,
 		},
+		CreatedAt: &p.CreatedAt,
+		Id:        &p.PostID,
 	}
 }

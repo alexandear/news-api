@@ -7,27 +7,6 @@ import (
 	"time"
 )
 
-// CreatePostBody defines model for CreatePostBody.
-type CreatePostBody struct {
-	// Post content
-	Content *string `json:"content,omitempty"`
-
-	// Post title
-	Title string `json:"title"`
-}
-
-// CreatePostResponse defines model for CreatePostResponse.
-type CreatePostResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/UpdatePostResponse)
-	UpdatePostResponse `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-	// When post was created
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
-	// Post ID
-	Id *string `json:"id,omitempty"`
-}
-
 // Error defines model for Error.
 type Error struct {
 	// Error codes:
@@ -53,14 +32,35 @@ type GetAllPostsResponse struct {
 
 // Post defines model for Post.
 type Post struct {
-	// Embedded struct due to allOf(#/components/schemas/CreatePostBody)
-	CreatePostBody `yaml:",inline"`
-	// Embedded struct due to allOf(#/components/schemas/CreatePostResponse)
-	CreatePostResponse `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/PostData)
+	PostData `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/PostMetadata)
+	PostMetadata `yaml:",inline"`
 }
 
-// UpdatePostResponse defines model for UpdatePostResponse.
-type UpdatePostResponse struct {
+// PostData defines model for PostData.
+type PostData struct {
+	// Post content
+	Content *string `json:"content,omitempty"`
+
+	// Post title
+	Title string `json:"title"`
+}
+
+// PostMetadata defines model for PostMetadata.
+type PostMetadata struct {
+	// Embedded struct due to allOf(#/components/schemas/PostUpdateMetadata)
+	PostUpdateMetadata `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	// When post was created
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Post ID
+	Id *string `json:"id,omitempty"`
+}
+
+// PostUpdateMetadata defines model for PostUpdateMetadata.
+type PostUpdateMetadata struct {
 	// When post was last updated
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
@@ -78,7 +78,7 @@ type InvalidRequest ErrorResponse
 type NotFound ErrorResponse
 
 // CreatePostJSONBody defines parameters for CreatePost.
-type CreatePostJSONBody CreatePostBody
+type CreatePostJSONBody PostData
 
 // CreatePostJSONRequestBody defines body for CreatePost for application/json ContentType.
 type CreatePostJSONRequestBody CreatePostJSONBody
