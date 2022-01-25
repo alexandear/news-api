@@ -52,26 +52,44 @@ func (s *e2eTestSuite) Test_EndToEnd_GetAllPostsEmpty() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
-	req := s.NewRequest(http.MethodPost, "/posts", `{"title":"Post Title","content":"Post Content"}`)
+	s.Run("success", func() {
+		req := s.NewRequest(http.MethodPost, "/posts", `{"title":"Post Title","content":"Post Content"}`)
 
-	resp := s.DoRequest(req)
+		resp := s.DoRequest(req)
 
-	s.EqualStatusCode(http.StatusOK, resp)
+		s.EqualStatusCode(http.StatusOK, resp)
 
-	s.Require().NotNil(resp.Body)
-	type respJSON struct {
-		UpdatedAt time.Time `json:"updated_at"`
-		CreatedAt time.Time `json:"created_at"`
-		ID        string    `json:"id"`
-	}
+		s.Require().NotNil(resp.Body)
+		type respJSON struct {
+			UpdatedAt time.Time `json:"updated_at"`
+			CreatedAt time.Time `json:"created_at"`
+			ID        string    `json:"id"`
+		}
 
-	actual := &respJSON{}
-	s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
-	s.True(actual.UpdatedAt.IsZero())
-	s.False(actual.CreatedAt.IsZero())
-	s.IsUUID(actual.ID)
+		actual := &respJSON{}
+		s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+		s.True(actual.UpdatedAt.IsZero())
+		s.False(actual.CreatedAt.IsZero())
+		s.IsUUID(actual.ID)
 
-	s.Require().NoError(resp.Body.Close())
+		s.Require().NoError(resp.Body.Close())
+	})
+
+	s.Run("empty body", func() {
+		req := s.NewRequest(http.MethodPost, "/posts", ``)
+
+		resp := s.DoRequest(req)
+
+		s.EqualStatusCode(http.StatusBadRequest, resp)
+	})
+
+	s.Run("invalid title", func() {
+		req := s.NewRequest(http.MethodPost, "/posts", `{"title":"po","content":"Post Content"}`)
+
+		resp := s.DoRequest(req)
+
+		s.EqualStatusCode(http.StatusBadRequest, resp)
+	})
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_GetPost() {

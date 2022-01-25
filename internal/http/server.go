@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -63,14 +65,9 @@ func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
-	if r.Body == nil {
-		s.sendBadRequestError(w, news.ErrInvalidArgument, ErrorCodeInvalidBody, "empty body")
-		return
-	}
-
-	var params news.CreatePostParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		s.sendBadRequestError(w, news.ErrInvalidArgument, ErrorCodeInvalidBody, "failed to decode body")
+	params, err := s.getCreatePostParams(r.Body)
+	if err != nil {
+		s.sendBadRequestError(w, err, ErrorCodeInvalidBody, "invalid body")
 		return
 	}
 
@@ -81,6 +78,23 @@ func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.sendOK(w, httpapiPostMetadata(meta))
+}
+
+func (s *Server) getCreatePostParams(body io.Reader) (news.CreatePostParams, error) {
+	if body == nil {
+		return news.CreatePostParams{}, errors.New("empty body")
+	}
+
+	var params news.CreatePostParams
+	if err := json.NewDecoder(body).Decode(&params); err != nil {
+		return news.CreatePostParams{}, fmt.Errorf("failed to decode body: %w", err)
+	}
+
+	if err := params.Validate(); err != nil {
+		return news.CreatePostParams{}, err
+	}
+
+	return params, nil
 }
 
 func (s *Server) DeletePost(w http.ResponseWriter, r *http.Request, postID httpapi.PostID) {
