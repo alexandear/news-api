@@ -129,6 +129,8 @@ func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
 }
 
 func (s *e2eTestSuite) NewRequest(method, path, body string) *http.Request {
+	s.T().Helper()
+
 	req, err := http.NewRequest(method, serverURL+path, strings.NewReader(body))
 	s.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
@@ -137,6 +139,8 @@ func (s *e2eTestSuite) NewRequest(method, path, body string) *http.Request {
 }
 
 func (s *e2eTestSuite) DoRequest(req *http.Request) *http.Response {
+	s.T().Helper()
+
 	client := &http.Client{
 		Timeout: 2 * time.Second,
 	}
@@ -169,6 +173,8 @@ func (s *e2eTestSuite) EqualResponse(expectedStatusCode int, expectedBody string
 }
 
 func (s *e2eTestSuite) IsUUID(actual string) {
+	s.T().Helper()
+
 	_, err := uuid.Parse(actual)
 	s.NoError(err)
 }
