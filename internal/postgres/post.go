@@ -44,7 +44,7 @@ func (p *postMetadata) ToModel() news.PostMetadata {
 	}
 }
 
-func (s *Storage) CreatePost(ctx context.Context, params news.CreatePostParams) (news.PostMetadata, error) {
+func (s *Storage) CreatePost(ctx context.Context, params news.PostParams) (news.PostMetadata, error) {
 	const q = `INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id, created_at`
 
 	var pm postMetadata
@@ -91,13 +91,14 @@ func (s *Storage) GetAllPosts(ctx context.Context) ([]news.Post, error) {
 	return posts, nil
 }
 
-func (s *Storage) UpdatePost(ctx context.Context, postID string, params news.UpdatePostParams) error {
-	const qs = `SELECT title, content FROM posts WHERE id = $1 FOR UPDATE`
-	const qu = `UPDATE posts SET title = $2, content = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1`
+func (s *Storage) UpdatePost(ctx context.Context, postID string, params news.PostParams) (news.PostMetadata, error) {
+	const qs = `SELECT created_at FROM posts WHERE id = $1 FOR UPDATE`
+	const qu = `UPDATE posts SET title = $2, content = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING updated_at`
 
+	var pm news.PostMetadata
+	pm.PostID = postID
 	if err := s.Transaction(ctx, nil, func(ctx context.Context, tx *sqlx.Tx) error {
-		var p post
-		err := tx.QueryRowx(qs, postID).StructScan(&p)
+		err := tx.QueryRowx(qs, postID).Scan(&pm.CreatedAt)
 		if errors.Is(err, sql.ErrNoRows) {
 			return news.ErrNotFound
 		}
@@ -105,16 +106,17 @@ func (s *Storage) UpdatePost(ctx context.Context, postID string, params news.Upd
 			return fmt.Errorf("failed to select: %w", err)
 		}
 
-		if _, err := tx.Exec(qu, postID, params.Title, params.Content); err != nil {
+		err = tx.QueryRowx(qu, postID, params.Title, params.Content).Scan(&pm.UpdatedAt)
+		if err != nil {
 			return fmt.Errorf("failed to update: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("transaction failed: %w", err)
+		return news.PostMetadata{}, fmt.Errorf("transaction failed: %w", err)
 	}
 
-	return nil
+	return pm, nil
 }
 
 func (s *Storage) DeletePost(ctx context.Context, postID string) error {

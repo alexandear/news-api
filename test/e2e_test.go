@@ -129,25 +129,8 @@ func (s *e2eTestSuite) createPost(title, content string) string {
 func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
 	s.Run("200 when success", func() {
 		id := s.createPost("Title", "Content")
-		req := s.NewRequest(http.MethodGet, "/posts/"+id, ``)
 
-		resp := s.DoRequest(req)
-
-		s.EqualStatusCode(http.StatusOK, resp)
-		s.Require().NotNil(resp.Body)
-		type respJSON struct {
-			Title     string    `json:"title"`
-			Content   string    `json:"content"`
-			UpdatedAt time.Time `json:"updated_at"`
-			CreatedAt time.Time `json:"created_at"`
-			ID        string    `json:"id"`
-		}
-
-		actual := &respJSON{}
-		s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
-		s.Equal(id, actual.ID)
-		s.Equal("Title", actual.Title)
-		s.Equal("Content", actual.Content)
+		s.getPost(id, "Title", "Content")
 	})
 
 	s.Run("404 when post not found", func() {
@@ -167,9 +150,43 @@ func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
 	})
 }
 
+func (s *e2eTestSuite) getPost(id, expectedTitle, expectedContent string) {
+	req := s.NewRequest(http.MethodGet, "/posts/"+id, ``)
+
+	resp := s.DoRequest(req)
+
+	s.EqualStatusCode(http.StatusOK, resp)
+	s.Require().NotNil(resp.Body)
+	type respJSON struct {
+		Title     string    `json:"title"`
+		Content   string    `json:"content"`
+		UpdatedAt time.Time `json:"updated_at"`
+		CreatedAt time.Time `json:"created_at"`
+		ID        string    `json:"id"`
+	}
+
+	actual := &respJSON{}
+	s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+	s.Equal(id, actual.ID)
+	s.Equal(expectedTitle, actual.Title)
+	s.Equal(expectedContent, actual.Content)
+}
+
 func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
+	s.Run("200 when update", func() {
+		id := s.createPost("Title", "Content")
+		req := s.NewRequest(http.MethodPut, "/posts/"+id, `{"title":"New title","content":"New content"}`)
+
+		resp := s.DoRequest(req)
+
+		s.EqualStatusCode(http.StatusOK, resp)
+		s.Require().NotNil(resp.Body)
+
+		s.getPost(id, "New title", "New content")
+	})
+
 	s.Run("404 when post not found", func() {
-		req := s.NewRequest(http.MethodPut, "/posts/"+uuid.NewString(), ``)
+		req := s.NewRequest(http.MethodPut, "/posts/"+uuid.NewString(), `{"title":"Title","content":"Content"}`)
 
 		resp := s.DoRequest(req)
 

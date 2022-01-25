@@ -25,10 +25,10 @@ const (
 )
 
 type Storage interface {
-	CreatePost(ctx context.Context, params news.CreatePostParams) (news.PostMetadata, error)
+	CreatePost(ctx context.Context, params news.PostParams) (news.PostMetadata, error)
 	GetPost(ctx context.Context, postID string) (news.Post, error)
 	GetAllPosts(ctx context.Context) ([]news.Post, error)
-	UpdatePost(ctx context.Context, postID string, params news.UpdatePostParams) error
+	UpdatePost(ctx context.Context, postID string, params news.PostParams) (news.PostMetadata, error)
 	DeletePost(ctx context.Context, postID string) error
 }
 
@@ -65,7 +65,7 @@ func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
-	params, err := s.getCreatePostParams(r.Body)
+	params, err := s.getPostParams(r.Body)
 	if err != nil {
 		s.sendBadRequestError(w, err, ErrorCodeInvalidBody, "invalid body")
 		return
@@ -80,18 +80,18 @@ func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
 	s.sendOK(w, httpapiPostMetadata(meta))
 }
 
-func (s *Server) getCreatePostParams(body io.Reader) (news.CreatePostParams, error) {
+func (s *Server) getPostParams(body io.Reader) (news.PostParams, error) {
 	if body == nil {
-		return news.CreatePostParams{}, errors.New("empty body")
+		return news.PostParams{}, errors.New("empty body")
 	}
 
-	var params news.CreatePostParams
+	var params news.PostParams
 	if err := json.NewDecoder(body).Decode(&params); err != nil {
-		return news.CreatePostParams{}, fmt.Errorf("failed to decode body: %w", err)
+		return news.PostParams{}, fmt.Errorf("failed to decode body: %w", err)
 	}
 
 	if err := params.Validate(); err != nil {
-		return news.CreatePostParams{}, err
+		return news.PostParams{}, err
 	}
 
 	return params, nil
@@ -137,16 +137,20 @@ func (s *Server) UpdatePost(w http.ResponseWriter, r *http.Request, postID httpa
 		return
 	}
 
-	err := s.storage.UpdatePost(r.Context(), string(postID), news.UpdatePostParams{})
+	params, err := s.getPostParams(r.Body)
+	if err != nil {
+		s.sendBadRequestError(w, err, ErrorCodeInvalidBody, "invalid body")
+		return
+	}
+
+	pm, err := s.storage.UpdatePost(r.Context(), string(postID), params)
 	switch {
-	case errors.Is(err, news.ErrInvalidArgument):
-		s.sendBadRequestError(w, err, ErrorCodeInvalidBody, "invalid update params")
 	case errors.Is(err, news.ErrNotFound):
 		s.sendNotFoundError(w, err, ErrorCodePostNotFound, "post not found")
 	case err != nil:
 		s.sendDefaultError(w, err, "failed to update post")
 	default:
-		s.sendOK(w, nil)
+		s.sendOK(w, httpapiPostMetadata(pm))
 	}
 }
 

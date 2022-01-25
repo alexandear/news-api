@@ -7,8 +7,7 @@ import (
 )
 
 var (
-	ErrInvalidArgument = errors.New("invalid argument")
-	ErrNotFound        = errors.New("not found")
+	ErrNotFound = errors.New("not found")
 )
 
 type Post struct {
@@ -25,20 +24,15 @@ type PostMetadata struct {
 	UpdatedAt time.Time
 }
 
-type CreatePostParams struct {
+type PostParams struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
 
-func (p *CreatePostParams) Validate() error {
+func (p *PostParams) Validate() error {
 	if len(p.Title) < 3 || len(p.Title) > 50 {
 		return fmt.Errorf("title should be more 3 and less 50 chars")
 	}
 
 	return nil
-}
-
-type UpdatePostParams struct {
-	Title   string
-	Content string
 }
