@@ -43,16 +43,18 @@ func (s *e2eTestSuite) TearDownTest() {
 	s.Require().NoError(cmd.Run())
 }
 
-func (s *e2eTestSuite) Test_EndToEnd_GetAllPostsEmpty() {
-	req := s.NewRequest(http.MethodGet, "/posts", "")
+func (s *e2eTestSuite) Test_EndToEnd_GetAllPosts() {
+	s.Run("200 when no posts", func() {
+		req := s.NewRequest(http.MethodGet, "/posts", "")
 
-	resp := s.DoRequest(req)
+		resp := s.DoRequest(req)
 
-	s.EqualResponse(http.StatusOK, `{"posts":[]}`, resp)
+		s.EqualResponse(http.StatusOK, `{"posts":[]}`, resp)
+	})
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
-	s.Run("success", func() {
+	s.Run("200 ok", func() {
 		req := s.NewRequest(http.MethodPost, "/posts", `{"title":"Post Title","content":"Post Content"}`)
 
 		resp := s.DoRequest(req)
@@ -75,7 +77,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 		s.Require().NoError(resp.Body.Close())
 	})
 
-	s.Run("empty body", func() {
+	s.Run("400 when empty body", func() {
 		req := s.NewRequest(http.MethodPost, "/posts", ``)
 
 		resp := s.DoRequest(req)
@@ -83,7 +85,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 		s.EqualStatusCode(http.StatusBadRequest, resp)
 	})
 
-	s.Run("invalid title", func() {
+	s.Run("400 when invalid title", func() {
 		req := s.NewRequest(http.MethodPost, "/posts", `{"title":"po","content":"Post Content"}`)
 
 		resp := s.DoRequest(req)
@@ -93,7 +95,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
-	s.Run("post not found", func() {
+	s.Run("404 when post not found", func() {
 		req := s.NewRequest(http.MethodGet, "/posts/"+uuid.NewString(), ``)
 
 		resp := s.DoRequest(req)
@@ -101,7 +103,7 @@ func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
 		s.EqualStatusCode(http.StatusNotFound, resp)
 	})
 
-	s.Run("invalid post id", func() {
+	s.Run("400 when invalid post id", func() {
 		req := s.NewRequest(http.MethodGet, "/posts/abc", ``)
 
 		resp := s.DoRequest(req)
@@ -111,7 +113,7 @@ func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
-	s.Run("post not found", func() {
+	s.Run("404 when post not found", func() {
 		req := s.NewRequest(http.MethodPut, "/posts/"+uuid.NewString(), ``)
 
 		resp := s.DoRequest(req)
@@ -119,7 +121,7 @@ func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
 		s.EqualStatusCode(http.StatusNotFound, resp)
 	})
 
-	s.Run("invalid post id", func() {
+	s.Run("400 when invalid post id", func() {
 		req := s.NewRequest(http.MethodPut, "/posts/abc", ``)
 
 		resp := s.DoRequest(req)
@@ -129,7 +131,7 @@ func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
-	s.Run("post not found", func() {
+	s.Run("404 when post not found", func() {
 		req := s.NewRequest(http.MethodDelete, "/posts/"+uuid.NewString(), ``)
 
 		resp := s.DoRequest(req)
@@ -137,7 +139,7 @@ func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
 		s.EqualStatusCode(http.StatusNotFound, resp)
 	})
 
-	s.Run("invalid post id", func() {
+	s.Run("400 when invalid post id", func() {
 		req := s.NewRequest(http.MethodDelete, "/posts/abc", ``)
 
 		resp := s.DoRequest(req)
