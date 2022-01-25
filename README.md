@@ -18,6 +18,9 @@ docker-compose up
 
 Server will be accessible via port **8080** by default.
 
+The interactive documentation is accessible at http://localhost:8080/docs.
+Specification in the Open API 3.0 format can be found in the [api/news.openapi.yaml](api/news.openapi.yaml).
+
 ## Development
 
 > Prerequisites: `go@1.18`, `make` must be installed.
