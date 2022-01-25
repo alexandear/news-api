@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	news "github.com/alexandear/news-api/internal"
@@ -47,7 +48,7 @@ func NewServer(log *log.Logger, storage Storage) *Server {
 func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	posts, err := s.storage.GetAllPosts(r.Context())
 	if err != nil {
-		s.sendDefaultError(w, err, "")
+		s.sendDefaultError(w, err, "failed to get all posts")
 		return
 	}
 
@@ -56,7 +57,7 @@ func (s *Server) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 		respPosts = append(respPosts, httpapiPost(p))
 	}
 
-	s.sendOK(w, httpapi.GetAllPostsResponse{
+	s.sendOK(w, &httpapi.GetAllPostsResponse{
 		Posts: respPosts,
 	})
 }
@@ -74,21 +75,22 @@ func (s *Server) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	meta, err := s.storage.CreatePost(r.Context(), params)
-	switch {
-	case errors.Is(err, news.ErrInvalidArgument):
-		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "invalid create params")
-	case err != nil:
+	if err != nil {
 		s.sendDefaultError(w, err, "failed to create post")
-	default:
-		s.sendOK(w, httpapiPostMetadata(meta))
+		return
 	}
+
+	s.sendOK(w, httpapiPostMetadata(meta))
 }
 
 func (s *Server) DeletePost(w http.ResponseWriter, r *http.Request, postID httpapi.PostID) {
+	if err := validatePostID(postID); err != nil {
+		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "post id is invalid")
+		return
+	}
+
 	err := s.storage.DeletePost(r.Context(), string(postID))
 	switch {
-	case errors.Is(err, news.ErrInvalidArgument):
-		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "post id is invalid")
 	case errors.Is(err, news.ErrNotFound):
 		s.sendNotFoundError(w, err, ErrorCodePostNotFound, "post not found")
 	case err != nil:
@@ -99,10 +101,13 @@ func (s *Server) DeletePost(w http.ResponseWriter, r *http.Request, postID httpa
 }
 
 func (s *Server) GetPost(w http.ResponseWriter, r *http.Request, postID httpapi.PostID) {
+	if err := validatePostID(postID); err != nil {
+		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "post id is invalid")
+		return
+	}
+
 	post, err := s.storage.GetPost(r.Context(), string(postID))
 	switch {
-	case errors.Is(err, news.ErrInvalidArgument):
-		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "post id is invalid")
 	case errors.Is(err, news.ErrNotFound):
 		s.sendNotFoundError(w, err, ErrorCodePostNotFound, "post not found")
 	case err != nil:
@@ -113,10 +118,15 @@ func (s *Server) GetPost(w http.ResponseWriter, r *http.Request, postID httpapi.
 }
 
 func (s *Server) UpdatePost(w http.ResponseWriter, r *http.Request, postID httpapi.PostID) {
+	if err := validatePostID(postID); err != nil {
+		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "post id is invalid")
+		return
+	}
+
 	err := s.storage.UpdatePost(r.Context(), string(postID), news.UpdatePostParams{})
 	switch {
 	case errors.Is(err, news.ErrInvalidArgument):
-		s.sendBadRequestError(w, err, ErrorCodeInvalidPostID, "invalid update params")
+		s.sendBadRequestError(w, err, ErrorCodeInvalidBody, "invalid update params")
 	case errors.Is(err, news.ErrNotFound):
 		s.sendNotFoundError(w, err, ErrorCodePostNotFound, "post not found")
 	case err != nil:
@@ -124,6 +134,11 @@ func (s *Server) UpdatePost(w http.ResponseWriter, r *http.Request, postID httpa
 	default:
 		s.sendOK(w, nil)
 	}
+}
+
+func validatePostID(postID httpapi.PostID) error {
+	_, err := uuid.Parse(string(postID))
+	return err
 }
 
 func httpapiPost(p news.Post) httpapi.Post {

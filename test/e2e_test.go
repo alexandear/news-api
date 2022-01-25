@@ -29,7 +29,7 @@ func TestE2ETestSuite(t *testing.T) {
 }
 
 func (s *e2eTestSuite) SetupSuite() {
-	cmd := newDockerComposeCmd("up", "-d")
+	cmd := newDockerComposeCmd("up", "-d", "--build")
 	s.Require().NoError(cmd.Run())
 }
 
@@ -52,7 +52,7 @@ func (s *e2eTestSuite) Test_EndToEnd_GetAllPostsEmpty() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
-	req := s.NewRequest(http.MethodPost, "/posts", `{"title":"Post Title","content":"Content"}`)
+	req := s.NewRequest(http.MethodPost, "/posts", `{"title":"Post Title","content":"Post Content"}`)
 
 	resp := s.DoRequest(req)
 
@@ -68,11 +68,71 @@ func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 
 	actual := &respJSON{}
 	s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
-	s.False(actual.UpdatedAt.IsZero())
+	s.True(actual.UpdatedAt.IsZero())
 	s.False(actual.CreatedAt.IsZero())
 	s.IsUUID(actual.ID)
 
 	s.Require().NoError(resp.Body.Close())
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
+	s.Run("post not found", func() {
+		req := s.NewRequest(http.MethodGet, "/posts/"+uuid.NewString(), ``)
+
+		resp := s.DoRequest(req)
+
+		s.Require().NotNil(resp)
+		s.Equal(http.StatusNotFound, resp.StatusCode)
+	})
+
+	s.Run("invalid post id", func() {
+		req := s.NewRequest(http.MethodGet, "/posts/abc", ``)
+
+		resp := s.DoRequest(req)
+
+		s.Require().NotNil(resp)
+		s.Equal(http.StatusBadRequest, resp.StatusCode)
+	})
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
+	s.Run("post not found", func() {
+		req := s.NewRequest(http.MethodPut, "/posts/"+uuid.NewString(), ``)
+
+		resp := s.DoRequest(req)
+
+		s.Require().NotNil(resp)
+		s.Equal(http.StatusNotFound, resp.StatusCode)
+	})
+
+	s.Run("invalid post id", func() {
+		req := s.NewRequest(http.MethodPut, "/posts/abc", ``)
+
+		resp := s.DoRequest(req)
+
+		s.Require().NotNil(resp)
+		s.Equal(http.StatusBadRequest, resp.StatusCode)
+	})
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
+	s.Run("post not found", func() {
+		req := s.NewRequest(http.MethodDelete, "/posts/"+uuid.NewString(), ``)
+
+		resp := s.DoRequest(req)
+
+		s.Require().NotNil(resp)
+		s.Equal(http.StatusNotFound, resp.StatusCode)
+	})
+
+	s.Run("invalid post id", func() {
+		req := s.NewRequest(http.MethodDelete, "/posts/abc", ``)
+
+		resp := s.DoRequest(req)
+
+		s.Require().NotNil(resp)
+		s.Equal(http.StatusBadRequest, resp.StatusCode)
+	})
 }
 
 func (s *e2eTestSuite) NewRequest(method, path, body string) *http.Request {

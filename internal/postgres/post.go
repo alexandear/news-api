@@ -92,8 +92,8 @@ func (s *Storage) GetAllPosts(ctx context.Context) ([]news.Post, error) {
 }
 
 func (s *Storage) UpdatePost(ctx context.Context, postID string, params news.UpdatePostParams) error {
-	const qs = `SELECT title, content FROM posts WHERE id = ? FOR UPDATE`
-	const qu = `UPDATE posts SET title = ?, content = ?, updated_at = ? WHERE id = ?`
+	const qs = `SELECT title, content FROM posts WHERE id = $1 FOR UPDATE`
+	const qu = `UPDATE posts SET title = $2, content = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1`
 
 	if err := s.Transaction(ctx, nil, func(ctx context.Context, tx *sqlx.Tx) error {
 		var p post
@@ -118,7 +118,7 @@ func (s *Storage) UpdatePost(ctx context.Context, postID string, params news.Upd
 }
 
 func (s *Storage) DeletePost(ctx context.Context, postID string) error {
-	const q = `DELETE FROM posts WHERE id = ?`
+	const q = `DELETE FROM posts WHERE id = $1`
 
 	rows, err := s.db.ExecContext(ctx, q, postID)
 	if err != nil {
@@ -130,7 +130,7 @@ func (s *Storage) DeletePost(ctx context.Context, postID string) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if affected == 0 {
-		return errors.New("not found")
+		return news.ErrNotFound
 	}
 
 	return nil
