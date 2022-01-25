@@ -56,10 +56,9 @@ func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 
 	resp := s.DoRequest(req)
 
-	s.Require().NotNil(resp)
-	s.Require().NotNil(resp.Body)
-	s.Equal(http.StatusOK, resp.StatusCode)
+	s.EqualStatusCode(http.StatusOK, resp)
 
+	s.Require().NotNil(resp.Body)
 	type respJSON struct {
 		UpdatedAt time.Time `json:"updated_at"`
 		CreatedAt time.Time `json:"created_at"`
@@ -81,8 +80,7 @@ func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
 
 		resp := s.DoRequest(req)
 
-		s.Require().NotNil(resp)
-		s.Equal(http.StatusNotFound, resp.StatusCode)
+		s.EqualStatusCode(http.StatusNotFound, resp)
 	})
 
 	s.Run("invalid post id", func() {
@@ -90,8 +88,7 @@ func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
 
 		resp := s.DoRequest(req)
 
-		s.Require().NotNil(resp)
-		s.Equal(http.StatusBadRequest, resp.StatusCode)
+		s.EqualStatusCode(http.StatusBadRequest, resp)
 	})
 }
 
@@ -101,8 +98,7 @@ func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
 
 		resp := s.DoRequest(req)
 
-		s.Require().NotNil(resp)
-		s.Equal(http.StatusNotFound, resp.StatusCode)
+		s.EqualStatusCode(http.StatusNotFound, resp)
 	})
 
 	s.Run("invalid post id", func() {
@@ -110,8 +106,7 @@ func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
 
 		resp := s.DoRequest(req)
 
-		s.Require().NotNil(resp)
-		s.Equal(http.StatusBadRequest, resp.StatusCode)
+		s.EqualStatusCode(http.StatusBadRequest, resp)
 	})
 }
 
@@ -121,8 +116,7 @@ func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
 
 		resp := s.DoRequest(req)
 
-		s.Require().NotNil(resp)
-		s.Equal(http.StatusNotFound, resp.StatusCode)
+		s.EqualStatusCode(http.StatusNotFound, resp)
 	})
 
 	s.Run("invalid post id", func() {
@@ -130,8 +124,7 @@ func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
 
 		resp := s.DoRequest(req)
 
-		s.Require().NotNil(resp)
-		s.Equal(http.StatusBadRequest, resp.StatusCode)
+		s.EqualStatusCode(http.StatusBadRequest, resp)
 	})
 }
 
@@ -153,13 +146,20 @@ func (s *e2eTestSuite) DoRequest(req *http.Request) *http.Response {
 	return resp
 }
 
-func (s *e2eTestSuite) EqualResponse(expectedStatusCode int, expectedBody string, actual *http.Response) {
+func (s *e2eTestSuite) EqualStatusCode(expectedStatusCode int, actual *http.Response) {
 	s.T().Helper()
 
 	s.Require().NotNil(actual)
-	s.Require().NotNil(actual.Body)
-	s.Equal(expectedStatusCode, actual.StatusCode)
 
+	s.Equal(expectedStatusCode, actual.StatusCode)
+}
+
+func (s *e2eTestSuite) EqualResponse(expectedStatusCode int, expectedBody string, actual *http.Response) {
+	s.T().Helper()
+
+	s.EqualStatusCode(expectedStatusCode, actual)
+
+	s.Require().NotNil(actual.Body)
 	byteBody, err := io.ReadAll(actual.Body)
 	s.Require().NoError(err)
 
