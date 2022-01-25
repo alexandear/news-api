@@ -29,6 +29,12 @@ All necessary configuration stored in [docker-compose.yaml](docker-compose.yaml)
 
 ### Binary
 
+Generate HTTP types:
+
+```shell
+make generate
+```
+
 Build the binary `bin/news-api`:
 
 ```shell

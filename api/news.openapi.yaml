@@ -3,10 +3,10 @@ info:
   version: 1.0.0
   title: News API Server
 servers:
-  - url: https://production.news.io/api/v1/
-    description: Production
   - url: http://localhost:8080/
     description: Local
+  - url: https://production.news.io/api/v1/
+    description: Production
 paths:
   /posts:
     post:
