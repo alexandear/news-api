@@ -55,11 +55,8 @@ func (s *e2eTestSuite) Test_EndToEnd_GetAllPosts() {
 
 	s.Run("200 when few posts", func() {
 		for i := 0; i < 3; i++ {
-			req := s.NewRequest(http.MethodPost, "/posts", fmt.Sprintf(`{"title":"Title %d","content":"Content %d"}`, i, i))
-			resp := s.DoRequest(req)
-			s.EqualStatusCode(http.StatusOK, resp)
+			s.createPost(fmt.Sprintf("Title %d", i), fmt.Sprintf("Content %d", i))
 		}
-
 		req := s.NewRequest(http.MethodGet, "/posts", "")
 
 		resp := s.DoRequest(req)
@@ -86,26 +83,7 @@ func (s *e2eTestSuite) Test_EndToEnd_GetAllPosts() {
 
 func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 	s.Run("200 ok", func() {
-		req := s.NewRequest(http.MethodPost, "/posts", `{"title":"Post Title","content":"Post Content"}`)
-
-		resp := s.DoRequest(req)
-
-		s.EqualStatusCode(http.StatusOK, resp)
-
-		s.Require().NotNil(resp.Body)
-		type respJSON struct {
-			UpdatedAt time.Time `json:"updated_at"`
-			CreatedAt time.Time `json:"created_at"`
-			ID        string    `json:"id"`
-		}
-
-		actual := &respJSON{}
-		s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
-		s.True(actual.UpdatedAt.IsZero())
-		s.False(actual.CreatedAt.IsZero())
-		s.IsUUID(actual.ID)
-
-		s.Require().NoError(resp.Body.Close())
+		s.createPost("Post Title", "Post Content")
 	})
 
 	s.Run("400 when empty body", func() {
@@ -125,7 +103,53 @@ func (s *e2eTestSuite) Test_EndToEnd_CreatePost() {
 	})
 }
 
+func (s *e2eTestSuite) createPost(title, content string) string {
+	req := s.NewRequest(http.MethodPost, "/posts", fmt.Sprintf(`{"title":"%s","content":"%s"}`, title, content))
+	resp := s.DoRequest(req)
+	s.EqualStatusCode(http.StatusOK, resp)
+	s.Require().NotNil(resp.Body)
+	type respJSON struct {
+		UpdatedAt time.Time `json:"updated_at"`
+		CreatedAt time.Time `json:"created_at"`
+		ID        string    `json:"id"`
+	}
+
+	actual := &respJSON{}
+	s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+
+	s.True(actual.UpdatedAt.IsZero())
+	s.False(actual.CreatedAt.IsZero())
+	s.IsUUID(actual.ID)
+
+	s.Require().NoError(resp.Body.Close())
+
+	return actual.ID
+}
+
 func (s *e2eTestSuite) Test_EndToEnd_GetPost() {
+	s.Run("200 when success", func() {
+		id := s.createPost("Title", "Content")
+		req := s.NewRequest(http.MethodGet, "/posts/"+id, ``)
+
+		resp := s.DoRequest(req)
+
+		s.EqualStatusCode(http.StatusOK, resp)
+		s.Require().NotNil(resp.Body)
+		type respJSON struct {
+			Title     string    `json:"title"`
+			Content   string    `json:"content"`
+			UpdatedAt time.Time `json:"updated_at"`
+			CreatedAt time.Time `json:"created_at"`
+			ID        string    `json:"id"`
+		}
+
+		actual := &respJSON{}
+		s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+		s.Equal(id, actual.ID)
+		s.Equal("Title", actual.Title)
+		s.Equal("Content", actual.Content)
+	})
+
 	s.Run("404 when post not found", func() {
 		req := s.NewRequest(http.MethodGet, "/posts/"+uuid.NewString(), ``)
 
@@ -162,12 +186,27 @@ func (s *e2eTestSuite) Test_EndToEnd_UpdatePost() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_DeletePost() {
+	s.Run("200 when success delete", func() {
+		id := s.createPost("Title", "Content")
+		req := s.NewRequest(http.MethodDelete, "/posts/"+id, ``)
+
+		resp := s.DoRequest(req)
+
+		s.EqualStatusCode(http.StatusOK, resp)
+		{
+			req := s.NewRequest(http.MethodGet, "/posts/"+id, ``)
+			resp := s.DoRequest(req)
+			s.EqualStatusCode(http.StatusNotFound, resp)
+		}
+	})
+
 	s.Run("404 when post not found", func() {
 		req := s.NewRequest(http.MethodDelete, "/posts/"+uuid.NewString(), ``)
 
 		resp := s.DoRequest(req)
 
 		s.EqualStatusCode(http.StatusNotFound, resp)
+
 	})
 
 	s.Run("400 when invalid post id", func() {
