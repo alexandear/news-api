@@ -107,3 +107,7 @@ func (c *ServerCmd) Run() error {
 
 	return nil
 }
+
+func addPostgresURLFlag(fs *flag.FlagSet, postgresURL *string) {
+	fs.StringVar(postgresURL, "postgres_url", "", "Database URL")
+}

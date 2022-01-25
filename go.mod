@@ -8,7 +8,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-openapi/runtime v0.21.1
 	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/golang/mock v1.6.0
 	github.com/golangci/golangci-lint v1.43.0
 	github.com/google/uuid v1.3.0
 	github.com/jmoiron/sqlx v1.3.1
