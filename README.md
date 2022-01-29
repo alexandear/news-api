@@ -83,3 +83,8 @@ make lint
 
 There are configured GitHub actions for build, lint, and run tests.
 See [.github/workflows](.github/workflows) directory.
+
+## Issues
+
+- Migrations started before `postgres`.
+- e2e tests fails.
