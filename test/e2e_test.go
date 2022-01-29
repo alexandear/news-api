@@ -21,12 +21,11 @@ const (
 
 type e2eTestSuite struct {
 	suite.Suite
-
-	dockerCompose *exec.Cmd
 }
 
 func TestE2ETestSuite(t *testing.T) {
-	suite.Run(t, &e2eTestSuite{})
+	var e2ets e2eTestSuite
+	suite.Run(t, &e2ets)
 }
 
 func (s *e2eTestSuite) SetupSuite() {
@@ -75,8 +74,8 @@ func (s *e2eTestSuite) Test_EndToEnd_GetAllPosts() {
 			Posts []respPost `json:"posts"`
 		}
 
-		actual := &respJSON{}
-		s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+		var actual respJSON
+		s.Require().NoError(json.NewDecoder(resp.Body).Decode(&actual))
 		s.Len(actual.Posts, 3)
 	})
 }
@@ -114,8 +113,8 @@ func (s *e2eTestSuite) createPost(title, content string) string {
 		ID        string    `json:"id"`
 	}
 
-	actual := &respJSON{}
-	s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+	var actual respJSON
+	s.Require().NoError(json.NewDecoder(resp.Body).Decode(&actual))
 
 	s.True(actual.UpdatedAt.IsZero())
 	s.False(actual.CreatedAt.IsZero())
@@ -165,8 +164,8 @@ func (s *e2eTestSuite) getPost(id, expectedTitle, expectedContent string) {
 		ID        string    `json:"id"`
 	}
 
-	actual := &respJSON{}
-	s.Require().NoError(json.NewDecoder(resp.Body).Decode(actual))
+	var actual respJSON
+	s.Require().NoError(json.NewDecoder(resp.Body).Decode(&actual))
 	s.Equal(id, actual.ID)
 	s.Equal(expectedTitle, actual.Title)
 	s.Equal(expectedContent, actual.Content)
@@ -248,7 +247,7 @@ func (s *e2eTestSuite) NewRequest(method, path, body string) *http.Request {
 func (s *e2eTestSuite) DoRequest(req *http.Request) *http.Response {
 	s.T().Helper()
 
-	client := &http.Client{
+	client := http.Client{
 		Timeout: 2 * time.Second,
 	}
 	resp, err := client.Do(req)

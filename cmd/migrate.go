@@ -19,14 +19,14 @@ type MigrateCmd struct {
 
 func NewMigrateCmd() *MigrateCmd {
 	fs := flag.NewFlagSet("migrate", flag.ContinueOnError)
-	cmd := &MigrateCmd{
+	cmd := MigrateCmd{
 		fs: fs,
 	}
 
 	cmd.fs.StringVar(&cmd.MigrationsDir, "migrations_dir", "migrations", "Directory with migrations SQLs")
 	addPostgresURLFlag(cmd.fs, &cmd.PostgresURL)
 
-	return cmd
+	return &cmd
 }
 
 func (c *MigrateCmd) Name() string {

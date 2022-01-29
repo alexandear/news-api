@@ -18,7 +18,7 @@ type StructuredLogger struct {
 }
 
 func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
-	entry := &StructuredLoggerEntry{Logger: log.NewEntry(l.Logger)}
+	entry := StructuredLoggerEntry{Logger: log.NewEntry(l.Logger)}
 	logFields := log.Fields{}
 
 	logFields["ts"] = time.Now().UTC().Format(time.RFC3339)
@@ -44,7 +44,7 @@ func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	entry.Logger.Infoln("request started")
 
-	return entry
+	return &entry
 }
 
 type StructuredLoggerEntry struct {

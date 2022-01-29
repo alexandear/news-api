@@ -30,7 +30,7 @@ type ServerCmd struct {
 
 func NewServerCmd() *ServerCmd {
 	fs := flag.NewFlagSet("server", flag.ContinueOnError)
-	cmd := &ServerCmd{
+	cmd := ServerCmd{
 		fs: fs,
 	}
 
@@ -38,7 +38,7 @@ func NewServerCmd() *ServerCmd {
 	cmd.fs.IntVar(&cmd.Port, "port", 8080, "HTTP port")
 	addPostgresURLFlag(cmd.fs, &cmd.PostgresURL)
 
-	return cmd
+	return &cmd
 }
 
 func (c *ServerCmd) Name() string {

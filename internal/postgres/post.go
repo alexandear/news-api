@@ -80,8 +80,8 @@ func (s *Storage) GetAllPosts(ctx context.Context) ([]news.Post, error) {
 
 	var posts []news.Post
 	for rows.Next() {
-		p := &post{}
-		if err := rows.StructScan(p); err != nil {
+		var p post
+		if err := rows.StructScan(&p); err != nil {
 			return nil, fmt.Errorf("failed to scan: %w", err)
 		}
 
