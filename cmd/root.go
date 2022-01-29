@@ -51,7 +51,7 @@ func (c RootCmd) Run(args []string) error {
 		return cmd.Run()
 	}
 
-	return fmt.Errorf("unknown command\n%s", c.help)
+	return fmt.Errorf("unknown command=%s\n%s", commandName, c.help)
 }
 
 func usage() string {
