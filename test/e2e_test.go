@@ -29,17 +29,18 @@ func TestE2ETestSuite(t *testing.T) {
 }
 
 func (s *e2eTestSuite) SetupSuite() {
-	cmd := newDockerComposeCmd("up", "-d", "--build")
+	cmd := newDockerComposeCmd("build")
 	s.Require().NoError(cmd.Run())
 }
 
-func (s *e2eTestSuite) TearDownSuite() {
-	cmd := newDockerComposeCmd("down")
+func (s *e2eTestSuite) SetupTest() {
+	cmd := newDockerComposeCmd("up", "-d")
 	s.Require().NoError(cmd.Run())
+	time.Sleep(4 * time.Second)
 }
 
 func (s *e2eTestSuite) TearDownTest() {
-	cmd := newDockerComposeCmd("up", "news-clean-postgres")
+	cmd := newDockerComposeCmd("down")
 	s.Require().NoError(cmd.Run())
 }
 

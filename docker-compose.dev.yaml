@@ -13,7 +13,7 @@ services:
   news-migrate:
     build: .
     image: news-api
-    entrypoint: ["news-api", "migrate"]
+    command: ["wait-for", "postgres:5432", "--", "news-api", "migrate"]
     env_file:
       - .env
     volumes:
@@ -21,20 +21,12 @@ services:
     depends_on:
       - postgres
 
-  news-clean-postgres:
-    image: postgres:14.1
-    env_file:
-      - .env
-    command: psql ${POSTGRES_URL} -c "TRUNCATE TABLE posts;"
-    depends_on:
-      - news-migrate
-
   news-server:
     build: .
     image: news-api
     ports:
       - "8080:8080"
-    entrypoint: ["news-api", "server"]
+    command: ["wait-for", "postgres:5432", "--", "news-api", "server"]
     environment:
       HOST: ""
       PORT: 8080
